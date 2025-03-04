@@ -1,0 +1,4 @@
+# ignore generated gerber files (use the zip)
+*.gbr
+*.drl
+*.gbrjob
