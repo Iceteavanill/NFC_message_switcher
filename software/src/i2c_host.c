@@ -1,5 +1,5 @@
 #include "i2c_host.h"
-/
+
 void reg_write(uint8_t* reg, uint8_t mask, uint8_t value)
 {
   *reg &= ~mask;
@@ -112,8 +112,8 @@ TWI_host_status i2c_host_get_read_status(void)
 TWI_host_status i2c_host_init_transmission(uint8_t address, TWI_host_direction direction)
 {
   TWI_host_status status;
-  TWI0.MADDR = (address << 1) | direction;
-  status = i2c_host_get_write_status();
+    TWI0.MADDR = (address << 1) | direction;
+    status = i2c_host_get_write_status();
   return status;
 }
 

@@ -1,6 +1,6 @@
 #include "st25dv04k.h"
 
-ST25DV04K_status ST25DV04K_init()
+ST25DV04K_status st25dv04k_init()
 {
   i2c_host_init();
   return ST25DV04K_SUCCESS;

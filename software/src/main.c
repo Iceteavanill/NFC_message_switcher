@@ -62,7 +62,7 @@ int main()
     st25dv04k_init(); // Init I2C connection
 
     // Set PA6 (GPO input) as input
-    PORTA.DIRCLR = PIN6_bm;
+    PORTA.DIRCLR |= PIN6_bm;
     // enable pullup (is needed because open drain output)
     PORTA.PIN6CTRL |= PORT_PULLUPEN_bm;
 
@@ -189,6 +189,7 @@ int main()
             // port is low, wait for timer interrupt.
             init_timer();
             nightyWakey();
+            continue;
         }
 
         i2cSuccess = st25dv04k_write_page(SLAVE_ADDRESS_USER, 0, pData, datalen);
@@ -196,8 +197,15 @@ int main()
         {
             break;
         }
+        else{
+            init_timer();
+            nightyWakey();   
+        }
     }
 
+    //It was written once, try again, just to be sure
+    st25dv04k_write_page(SLAVE_ADDRESS_USER, 0, pData, datalen);
+    
     // increment EEprom
     eeprom_write_byte(EEpromIncAdr, eepromData);
 
@@ -220,9 +228,9 @@ void nightyWakey()
     sei();                 // Enable interrupts
     sleep_cpu();           // Enter sleep mode
     sleep_disable();       // Disable sleep mode after waking up
-    cli();                 // Disable interrupts
-    TCA0.SINGLE.CTRLA = 0; // Disable the timer
-    TCA0.SINGLE.CNT = 0;   // Reset the timer value in case of future use
+    //cli();                 // Disable interrupts
+    TCB0.CTRLA &= ~TCB_ENABLE_bm; // Disable the timer
+    TCB0.CNT = 0;// Reset the timer value in case of future use
 }
 
 // ISR for timer B
@@ -235,9 +243,9 @@ ISR(TCB0_INT_vect)
 // Set the timer to generate an interrupt every 1000ms
 void init_timer()
 {
-    TCB0.CTRLA = TCB_CLKSEL_CLKDIV2_gc;              // Clock source: CLK_PER / 2 (16.384 kHz)
-    TCB0.CTRLB = TCB_CNTMODE_INT_gc;                 // Periodic interrupt mode
-    TCB0.CCMP = 16400;                               // Set period for 1000ms (16,384 Hz clock)
-    TCB0.INTCTRL = TCB_CAPT_bm;                      // Enable interrupt on capture/compare match
+    TCB0.CTRLA |= TCB_CLKSEL_CLKDIV2_gc;              // Clock source: CLK_PER / 2 (16.384 kHz)
+    TCB0.CTRLB |= TCB_CNTMODE_INT_gc;                 // Periodic interrupt mode
+    TCB0.CCMP = 65530;                               // Set period for 100ms (16,384 Hz clock)
+    TCB0.INTCTRL |= TCB_CAPT_bm;                      // Enable interrupt on capture/compare match
     TCB0.CTRLA |= (TCB_ENABLE_bm | TCB_RUNSTDBY_bm); // Enable TCB and allow run in standby
 }
