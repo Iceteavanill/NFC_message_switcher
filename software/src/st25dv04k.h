@@ -6,9 +6,10 @@
 
 typedef enum ST25DV04K_status
 {
-  ST25DV04K_Undef = 10,
+  ST25DV04K_UNDEF = 10,
   ST25DV04K_ERROR_I2C = -1,
-  ST25DV04K_SUCCESS = 0
+  ST25DV04K_SUCCESS = 0,
+  ST25DV04K_VERYFYFAIL = 8
 } ST25DV04K_status;
 
 /*
@@ -75,6 +76,7 @@ NA RO UID Unique identifier, 8 bytes
 
 ST25DV04K_status st25dv04k_init();
 ST25DV04K_status st25dv04k_write_page(ST25DV04K_slave_address slaveAddress, uint16_t address, uint8_t *pData, uint8_t len);
-ST25DV04K_status st25dv04k_read(ST25DV04K_slave_address slaveAddress, uint16_t address, uint8_t *pData, uint8_t len);
+ST25DV04K_status st25dv04k_read_page(ST25DV04K_slave_address slaveAddress, uint16_t address, uint8_t *pData, uint8_t len);
+ST25DV04K_status st25dv04k_write_verify(ST25DV04K_slave_address slaveAddress, uint16_t address, uint8_t *pData, uint8_t len);
 
 #endif // ST25DV04K_H

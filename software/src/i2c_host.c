@@ -1,6 +1,6 @@
 #include "i2c_host.h"
 
-void reg_write(uint8_t* reg, uint8_t mask, uint8_t value)
+void reg_write(uint8_t *reg, uint8_t mask, uint8_t value)
 {
   *reg &= ~mask;
   *reg |= value;
@@ -10,7 +10,7 @@ void reg_write(uint8_t* reg, uint8_t mask, uint8_t value)
 TWI_host_status i2c_host_init()
 {
   // Only fast mode plus is being supported yet
-  
+
   // disable interrupts
   reg_write(&TWI0.MCTRLA, TWI_RIEN_bm, (0 << TWI_RIEN_bp));
   reg_write(&TWI0.MCTRLA, TWI_WIEN_bm, (0 << TWI_WIEN_bp));
@@ -20,10 +20,10 @@ TWI_host_status i2c_host_init()
   // Hold time off (SMBus feature)
   reg_write(&TWI0.CTRLA, TWI_SDAHOLD_gm, TWI_SDAHOLD_OFF_gc);
   // Fast mode plus
-  //TWI0.CTRLA = 0x2;
-  //TWI0.CTRLA &= ~TWI_FMPEN_bm;
-  //TWI0.CTRLA |= (1<<TWI_FMPEN_bp);
-  reg_write(&TWI0.CTRLA, TWI_FMPEN_bm, (1<< TWI_FMPEN_bp));
+  // TWI0.CTRLA = 0x2;
+  // TWI0.CTRLA &= ~TWI_FMPEN_bm;
+  // TWI0.CTRLA |= (1<<TWI_FMPEN_bp);
+  reg_write(&TWI0.CTRLA, TWI_FMPEN_bm, (1 << TWI_FMPEN_bp));
   // TWI is halted in Break Debug mode and ignores events
   reg_write(&TWI0.DBGCTRL, TWI_DBGRUN_bm, (0 << TWI_DBGRUN_bp));
 
@@ -43,25 +43,26 @@ TWI_host_status i2c_host_init()
   TWI0.MBAUD = 8;
 
   // TWI disabled as client
-  reg_write(&TWI0.SCTRLA, TWI_ENABLE_bm, (0 << TWI_ENABLE_bp));    
+  reg_write(&TWI0.SCTRLA, TWI_ENABLE_bm, (0 << TWI_ENABLE_bp));
   // TWI enabled as host
-  reg_write(&TWI0.MCTRLA, TWI_ENABLE_bm, (1 << TWI_ENABLE_bp));    
+  reg_write(&TWI0.MCTRLA, TWI_ENABLE_bm, (1 << TWI_ENABLE_bp));
   // Busstate force to IDLE
   reg_write(&TWI0.MSTATUS, TWI_BUSSTATE_gm, TWI_BUSSTATE_IDLE_gc);
   // enable interrupts
   reg_write(&TWI0.MCTRLA, TWI_RIEN_bm, (1 << TWI_RIEN_bp));
   reg_write(&TWI0.MCTRLA, TWI_WIEN_bm, (1 << TWI_WIEN_bp));
- 
+
   return TWI_SUCCESS;
 }
 
 /*----------------------------------------------------------------------------*/
 TWI_host_status i2c_host_get_write_status(void)
-{  
+{
   TWI_host_status state = TWI_INIT;
-  do{
-    // read or write interrupt 
-    if((TWI0.MSTATUS & (TWI_WIF_bm | TWI_RIF_bm)) != 0x00)
+  do
+  {
+    // read or write interrupt
+    if ((TWI0.MSTATUS & (TWI_WIF_bm | TWI_RIF_bm)) != 0x00)
     {
       if ((TWI0.MSTATUS & TWI_RXACK_bm) == 0x00)
       {
@@ -72,48 +73,49 @@ TWI_host_status i2c_host_get_write_status(void)
         state = TWI_NO_ACKNOWLEDGEMENT;
       }
     }
-    else if((TWI0.MSTATUS & TWI_ARBLOST_bm) != 0x00)
+    else if ((TWI0.MSTATUS & TWI_ARBLOST_bm) != 0x00)
     {
       state = TWI_ARBITRATION_LOST;
     }
-    else if((TWI0.MSTATUS & TWI_BUSERR_bm) != 0x00)
+    else if ((TWI0.MSTATUS & TWI_BUSERR_bm) != 0x00)
     {
       state = TWI_BUS_ERROR;
-    }    
-  }while(state == TWI_INIT);
+    }
+  } while (state == TWI_INIT);
 
   return state;
 }
 
 /*----------------------------------------------------------------------------*/
 TWI_host_status i2c_host_get_read_status(void)
-{  
+{
   TWI_host_status state = TWI_INIT;
-  do{
-    // read or write interrupt 
-    if((TWI0.MSTATUS & (TWI_WIF_bm | TWI_RIF_bm)) != 0x00)
+  do
+  {
+    // read or write interrupt
+    if ((TWI0.MSTATUS & (TWI_WIF_bm | TWI_RIF_bm)) != 0x00)
     {
       state = TWI_READY;
     }
-    else if((TWI0.MSTATUS & TWI_ARBLOST_bm) != 0x00)
+    else if ((TWI0.MSTATUS & TWI_ARBLOST_bm) != 0x00)
     {
       state = TWI_ARBITRATION_LOST;
     }
-    else if((TWI0.MSTATUS & TWI_BUSERR_bm) != 0x00)
+    else if ((TWI0.MSTATUS & TWI_BUSERR_bm) != 0x00)
     {
       state = TWI_BUS_ERROR;
-    }    
-  }while(state == TWI_INIT);
+    }
+  } while (state == TWI_INIT);
 
   return state;
 }
-  
+
 /*----------------------------------------------------------------------------*/
 TWI_host_status i2c_host_init_transmission(uint8_t address, TWI_host_direction direction)
 {
   TWI_host_status status;
-    TWI0.MADDR = (address << 1) | direction;
-    status = i2c_host_get_write_status();
+  TWI0.MADDR = (address << 1) | direction;
+  status = i2c_host_get_write_status();
   return status;
 }
 
@@ -125,14 +127,14 @@ TWI_host_status i2c_host_write_byte(uint8_t data)
 }
 
 /*----------------------------------------------------------------------------*/
-TWI_host_status i2c_host_read_byte(uint8_t* pData)
+TWI_host_status i2c_host_read_byte(uint8_t *pData)
 {
   TWI_host_status status;
-  status = i2c_host_get_read_status();      
+  status = i2c_host_get_read_status();
   *pData = TWI0.MDATA;
   return status;
 }
-  
+
 /*----------------------------------------------------------------------------*/
 void i2c_host_acknowledge()
 {
@@ -164,9 +166,9 @@ void i2c_host_abort()
   // aborts transmission
   reg_write(&TWI0.MCTRLB, TWI_FLUSH_bm, (1 << TWI_FLUSH_bp));
   uint8_t abortDone = 0;
-  while(abortDone == 0)
+  while (abortDone == 0)
   {
-    if((TWI0.MSTATUS & TWI_BUSSTATE_gm) == TWI_BUSSTATE_IDLE_gc)
+    if ((TWI0.MSTATUS & TWI_BUSSTATE_gm) == TWI_BUSSTATE_IDLE_gc)
     {
       abortDone = 1;
     }
@@ -176,15 +178,15 @@ void i2c_host_abort()
 /*----------------------------------------------------------------------------*/
 void i2c_handle_error(TWI_host_status status)
 {
-  if(status == TWI_ARBITRATION_LOST)
+  if (status == TWI_ARBITRATION_LOST)
   {
     i2c_host_abort();
   }
-  else if(status == TWI_NO_ACKNOWLEDGEMENT)
+  else if (status == TWI_NO_ACKNOWLEDGEMENT)
   {
     i2c_host_stop();
   }
-  else if(status == TWI_BUS_ERROR)
+  else if (status == TWI_BUS_ERROR)
   {
     i2c_host_abort();
   }
