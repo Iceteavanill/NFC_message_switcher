@@ -2,40 +2,36 @@
 This software was written by Fabian Steiner for the NFC_message_switcher Project.
 It is provided AS IS with no liability for anything this software may or may not be the cause of.
 For more information check the github readme.
-This Project uses various AVR libraries
+This Project uses various AVR libraries aswell as the PIC bare metal reference driver
 */
 
 #include <xc.h>
 #include <stdint.h>
-#include "st25dv04k.h"
+#include <stdbool.h>
 #include <avr/io.h>
 #include <avr/eeprom.h>
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
-
-// debug for more precise error recording
-#define debugIsActive 0
+#include "TWI_host.h"
 
 // EEprom Data adresses
 uint8_t *EEpromIncAdr = (uint8_t *)0x00;  // Adress for incremental acces counting (gets looped around after 255)
 uint8_t *EEpromInitAdr = (uint8_t *)0x01; // Adress for storage of Initialisation status
 
-#if debugIsActive
-const uint8_t *EEpromErrAdr = (uint8_t *)0x01; // Adress to store Error States (for debugging)
-uint8_t errorData = 0x00;                      // error that may have happened
-ST25DV04K_status debugStateST25D = ST25DV04K_UNDEF;
-/*
-errorData :
-    0x01 -> Not inited but EV state correct
-    0x02 -> Error with I2C Communication
-    0x04 -> after write of EH mode, correct stae was not set -> wtf?
-*/
-#endif
+// pointer to data that should be writen to the defined registers
+uint8_t EHMData = 0x00;
+uint8_t GPOData = 0x82;
 
 // functions
-void nightynighty(); // func to go to sleep indefinitely -> after NFC tag has been written
-void nightyWakey();  // function to go to sleep but also read Interrupt and wake up
-void init_timer();   // init the timer for periodic interrupt
+
+// func to go to sleep indefinitely -> after NFC tag has been written
+void nightynighty();
+// function to go to sleep but also read Interrupt and wake up
+void nightyWakey();
+// init the timer for periodic interrupt
+void init_timer();
+// harware wait(with timer and interupt)
+void harwareWait();
 
 // fuse definition
 FUSES = {
@@ -59,80 +55,77 @@ int main()
     CLKCTRL.MCLKCTRLB &= ~CLKCTRL_PEN_bm;             // Disable internal Clock Divider (for now))
     CLKCTRL.MCLKLOCK |= 1;                            // lock clock configuration
 
-    st25dv04k_init(); // Init I2C connection
+    // Init I2C connection
+    TWI_initHost();
 
     // Set PA6 (GPO input) as input
     PORTA.DIRCLR |= PIN6_bm;
     // enable pullup (is needed because open drain output)
     PORTA.PIN6CTRL |= PORT_PULLUPEN_bm;
 
-    if (eeprom_read_byte(EEpromInitAdr) != 0x69) // check if the ST25DV04 device has been Inited
+    // check if the ST25DV04 device has been Inited
+    if (eeprom_read_byte(EEpromInitAdr) != 0x69) 
     {
         // Password for system access (default)
         uint8_t defaultpasswordSequence[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-// debug mode -> more, and finer info
-#if debugIsActive == 1
-        uint8_t readdata = 0xFF; // generell read buffer for reading from the device
-
-        // check if EH mode is set to 0 (forced after boot)
-        debugStateST25D = st25dv04k_read_page(SLAVE_ADDRESS_SYSTEM, SysReg_EH_MODE, &readdata, 1);
-        errorData |= (debugStateST25D == ST25DV04K_SUCCESS ? 0 : 0x02);
-
-        if (readdata == 0) // maybe dont check in production code and just write :)
-        {
-            // EH mode is correctly set -> continue
-            errorData |= 0x01;
-        }
-        else
-        {
-            // Provide Password to ST25DV device
-            debugStateST25D = st25dv04k_write_page(SLAVE_ADDRESS_SYSTEM, SysReg_PasswordAdr, &defaultpasswordSequence[0], 17);
-            errorData |= (debugStateST25D == ST25DV04K_SUCCESS ? 0 : 0x02);
-
-            // now that a Secure session is open -> write EH mode
-            debugStateST25D = st25dv04k_write_page(SLAVE_ADDRESS_SYSTEM, SysReg_EH_MODE, (uint8_t *)0, 1);
-            errorData |= (debugStateST25D == ST25DV04K_SUCCESS ? 0 : 0x02);
-
-            // double check correct state set
-            debugStateST25D = st25dv04k_read_page(SLAVE_ADDRESS_SYSTEM, SysReg_EH_MODE, &readdata, 1);
-            errorData |= (debugStateST25D == ST25DV04K_SUCCESS ? 0 : 0x02);
-            errorData |= (readdata == 0 ? 0 : 0x04);
-        }
-        // check if GPO output ist set to RF_ACTIVITY_EN (with enable bit)
-        debugStateST25D = st25dv04k_read_page(SLAVE_ADDRESS_SYSTEM, SysReg_GPO, &readdata, 1);
-        errorData |= (readdata == 0 ? 0 : 0x02);
-
-        if (readdata == 0x82) // check for RF_ACTIVITY_EN and enable bit -> b10000010
-        {
-            // GPO mode is correctly set -> continue
-            errorData |= 0x01;
-        }
-        else
-        {
-            // dont provide password because if one was not written, both were probabbly not written
-
-            // now that a Secure session is open -> write EH mode
-            debugStateST25D = st25dv04k_write_page(SLAVE_ADDRESS_SYSTEM, SysReg_EH_MODE, (uint8_t *)0, 1);
-            errorData |= (debugStateST25D == ST25DV04K_SUCCESS ? 0 : 0x02);
-
-            // double check correct state set
-            debugStateST25D = st25dv04k_read_page(SLAVE_ADDRESS_SYSTEM, SysReg_GPO, &readdata, 1);
-            errorData |= (debugStateST25D == ST25DV04K_SUCCESS ? 0 : 0x02);
-            errorData |= (readdata == 0x82 ? 0 : 0x04);
-        }
-#else // no debugging
+        bool slaveDeviceError = false;
 
         // Provide Password to ST25DV device
-        st25dv04k_write_page(SLAVE_ADDRESS_SYSTEM, SysReg_PasswordAdr, &defaultpasswordSequence[0], 17);
-        // now that a Secure session is open -> write EH mode
-        st25dv04k_write_page(SLAVE_ADDRESS_SYSTEM, SysReg_EH_MODE, (uint8_t *)0, 1);
-        // write GPO mode
-        st25dv04k_write_page(SLAVE_ADDRESS_SYSTEM, SysReg_GPO, (uint8_t *)0x82, 1);
-#endif
+        if (!TWI_sendBytesToRegister(SLAVE_ADDRESS_SYSTEM, SysReg_PasswordAdr, &defaultpasswordSequence[0], 17))
+        {
+            slaveDeviceError = true;
+        }
+        harwareWait();
 
-        eeprom_write_byte(EEpromInitAdr, 0x69); // ST25dv was initialized -> mark as initialized
-        nightynighty();
+        // now that a Secure session is open -> write EH mode
+        if (!TWI_sendBytesToRegister(SLAVE_ADDRESS_SYSTEM, SysReg_EH_MODE, &EHMData, 1))
+        {
+            slaveDeviceError = true;
+        }
+        harwareWait();
+
+        // write GPO mode
+        if (!TWI_sendBytesToRegister(SLAVE_ADDRESS_SYSTEM, SysReg_GPO, &GPOData, 1))
+        {
+            slaveDeviceError = true;
+        }
+        harwareWait();
+
+        // check if writing to device was successfull
+        if (slaveDeviceError)
+        {
+            // cant do anything stop wait here for debug
+            nightynighty();
+            return -1;
+        }
+        harwareWait();
+
+        // check EH mode
+        if (!TWI_VerifyBytes(SLAVE_ADDRESS_SYSTEM, SysReg_EH_MODE, &EHMData, 1))
+        {
+            slaveDeviceError = true;
+        }
+        harwareWait();
+
+        // check GPO mode
+        if (!TWI_VerifyBytes(SLAVE_ADDRESS_SYSTEM, SysReg_GPO, &GPOData, 1))
+        {
+            slaveDeviceError = true;
+        }
+
+        // if all good (writing to device was successfull)
+        if (!slaveDeviceError)
+        {
+            // ST25dv was initialized -> mark as initialized
+            eeprom_write_byte(EEpromInitAdr, 0x69);
+        }
+        else
+        {
+            // cant do anything stop wait here for debug
+            nightynighty();
+            return -1;
+        }
     }
 
     uint8_t *pData;      // datapointer
@@ -140,6 +133,8 @@ int main()
 
     // read eeprom inc adress
     uint8_t eepromData = eeprom_read_byte(EEpromIncAdr);
+
+    // clamp eeprom adress
     if (eepromData == 255)
     {
         eepromData = 0;
@@ -180,28 +175,36 @@ int main()
         break;
     }
 
+    uint8_t state = 0;
     // write message to NRF device
-    ST25DV04K_status i2cSuccess = ST25DV04K_UNDEF;
-    while (i2cSuccess != ST25DV04K_SUCCESS)
+    while (state != 3)
     {
-        if (!(PORTA.IN & PIN6_bm))
-        {
-            // port is low, wait for timer interrupt.
-            init_timer();
-            nightyWakey();
-            continue;
-        }
 
-        i2cSuccess = st25dv04k_write_page(SLAVE_ADDRESS_USER, 0, pData, datalen);
-        if (i2cSuccess == ST25DV04K_SUCCESS || i2cSuccess == ST25DV04K_VERYFYFAIL)
+        if ((PORTA.IN & PIN6_bm))
         {
-            break;
+
+            // pin is high go to next step
+            if (state == 0)
+            {
+                if (TWI_sendBytesToRegister(SLAVE_ADDRESS_USER, 0, pData, datalen))
+                {
+                    state = 1;
+                }
+            }
+            else
+            {
+                if (TWI_VerifyBytes(SLAVE_ADDRESS_USER, 0, pData, datalen))
+                {
+                    state = 3;
+                    break;
+                }
+                else
+                {
+                    state = 0;
+                }
+            }
         }
-        else
-        {
-            init_timer();
-            nightyWakey();
-        }
+        harwareWait();
     }
 
     // increment EEprom
@@ -246,4 +249,11 @@ void init_timer()
     TCB0.CCMP = 65530;                               // Set period for 100ms (16,384 Hz clock)
     TCB0.INTCTRL |= TCB_CAPT_bm;                     // Enable interrupt on capture/compare match
     TCB0.CTRLA |= (TCB_ENABLE_bm | TCB_RUNSTDBY_bm); // Enable TCB and allow run in standby
+}
+
+// harware wait function
+void harwareWait()
+{
+    init_timer();
+    nightyWakey();
 }
