@@ -3,7 +3,7 @@
 # NFC message switcher
 
 This project is an implementation of an NFC tag which is able to change the message. It communicates to a host device. It was developed to be quickly assembled and easy to use but still be a bit more than a blinking light. It uses the reference implementation for the [bare metal TWI driver](https://github.com/microchip-pic-avr-examples/attiny1627-bare-metal-twi-mplab).
-![Isometric view](/pictures/render_ismoetric.png)
+![PCB render](/pictures/render_blue.png)
 
 ## Main principle of operation
 
@@ -75,7 +75,7 @@ You can use the provided released hex file, however it is recommended to customi
 The provided jupyter notebook can be used to generate custom messages. 
 You then have to add a new case to the main code.
 ```c
-case 4: // "your custum message. increment accordingly"
+case 4: // case for your custum message. increment accordingly
     pData = &dat5[0]; // main output of the jupyter notebook
     datalen = 34;     // length of message (jupyter notebook tells you this)
     break;
