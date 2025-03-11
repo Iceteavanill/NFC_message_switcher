@@ -83,6 +83,17 @@ case 4: // case for your custum message. increment accordingly
 To compile this code you need the XC8 compiler from microchip.
 A snap programmer or similar is also needed to upload to the ATtiny.
 
+## Batch programming
+
+Many devices in a row can be programmed with the programming jig:
+
+![programming jig](/pictures/programming%20jig.png)
+
+It was designed in Onshape. 
+I used pogopins that I had on hand. 
+You probably want to customize it to your current stock. 
+You find the Onshape document [here](https://cad.onshape.com/documents/450623688917edcaa975b9e7/w/39588c936aa9381f65fac7c0/e/be57d568f84f27791dc539d2?renderMode=0&uiState=67cfd948ca833f6780730f6a).
+
 # Caveat
 
 It must be noted that the current design has a (obvious) flaw. 
