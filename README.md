@@ -72,15 +72,22 @@ There are no special requirements for the assembly of the PCB's.
 ## Software
 
 You can use the provided released hex file, however it is recommended to customize the software to your own taste. 
-The provided jupyter notebook can be used to generate custom messages. 
+The provided jupyter notebook should be used to generate custom messages. 
 You then have to add a new case to the main code.
 ```c
 case 4: // case for your custum message. increment accordingly
     pData = &dat5[0]; // main output of the jupyter notebook
-    datalen = 34;     // length of message (jupyter notebook tells you this)
     break;
 ```
 To compile this code you need the XC8 compiler from microchip.
+The following settings should be used:
+
+| Flags    | commands                                                                   |
+|----------|----------------------------------------------------------------------------|
+| Global   | -gdwarf-3 -mconst-data-in-progmem -mno-const-data-in-config-mapped-progmem |
+| compiler | -funsigned-char -funsigned-bitfields -Wall -O2 -fno-common                 |
+| linker   | "libm" -Wl,--gc-sections                                                   |
+
 A snap programmer or similar is also needed to upload to the ATtiny.
 
 ## Batch programming
