@@ -109,7 +109,7 @@ extern "C"
    * This function writes a double byte (regAddress) to the client, then restarts and attempts to read len of data.
    * Returns true if successful, false if it failed to get data.
    */
-  bool TWI_sendBytesToRegister(uint8_t addr, uint16_t regAdr, uint8_t *data, uint8_t len);
+  bool TWI_sendBytesToRegister(uint8_t addr, uint16_t regAdr, const uint8_t *data, uint8_t len);
 
   /**
    * <b><FONT COLOR=BLUE>void</FONT> TWI_sendAndReadBytes(<FONT COLOR=BLUE>uint8_t</FONT> addr, <FONT COLOR=BLUE>uint8_t</FONT> regAddress,<FONT COLOR=BLUE>uint8_t</FONT>* data, <FONT COLOR=BLUE>uint8_t</FONT> len)</B>

@@ -59,9 +59,9 @@ The following parts are needed to recreate this Project (as well as the PCB):
 
 | Reference 	|   Value   	| Qty 	|    Digikey number    	|
 |:---------:	|:---------:	|:---:	|:-------------------:	|
-|   C1,C3   	|   0.1uF   	|  2  	|    1276-1000-1-ND   	|
+|   C1, C3   	|   0.1uF   	|  2  	|    1276-1000-1-ND   	|
 |     C2    	|    47uF   	|  1  	|    1276-3063-2-ND   	|
-|   R1,R2   	|    4k7    	|  2  	|    MMA-4.7KACT-ND   	|
+|   R1, R2   	|    4k7    	|  2  	|    MMA-4.7KACT-ND   	|
 |     U1    	| ATtiny402 	|  1  	| ATTINY402-SSNRCT-ND 	|
 |     U2    	| ST25DV04K 	|  1  	|    497-17123-1-ND   	|
 
@@ -72,14 +72,18 @@ There are no special requirements for the assembly of the PCB's.
 ## Software
 
 You can use the provided released hex file, however it is recommended to customize the software to your own taste. 
-The provided jupyter notebook should be used to generate custom messages. 
-You then have to add a new case to the main code.
-```c
-case 4: // case for your custum message. increment accordingly
-    pData = &dat5[0]; // main output of the jupyter notebook
-    break;
+The provided python script should be used to generate custom messages. 
+Edit the ```message_as_text_list``` list with your messages and then run the script:
+```py
+message_as_text_list = ["Test 1",
+                        "Test 2 a bit longer",
+                        "Test 3 even looooooooooooooooooooooooooonger",
+                        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                        "spotify:track:4cOdK2wGLETKBW3PvgPWqT"
+]
 ```
-To compile this code you need the XC8 compiler from microchip.
+It regenerates the ```nfc_messages.h```. 
+To recompile this code you need the XC8 compiler from microchip.
 The following settings should be used:
 
 | Flags    | commands                                                                   |

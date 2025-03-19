@@ -234,7 +234,7 @@ bool TWI_sendAndReadBytes(uint8_t addr, uint8_t regAddress, uint8_t *data, uint8
     return true;
 }
 
-bool TWI_sendBytesToRegister(uint8_t addr, uint16_t regAdr, uint8_t *data, uint8_t len)
+bool TWI_sendBytesToRegister(uint8_t addr, uint16_t regAdr, const uint8_t *data, uint8_t len)
 {
     // Address Client Device (Write)
     if (!_startTWI(addr, TWI_WRITE))
