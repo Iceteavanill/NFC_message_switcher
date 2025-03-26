@@ -50,3 +50,14 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Mplab uplod something something?
+MPLABXLog.xml
+*.log
+*.lck
+
+# WxWidgets stuff
+*.bak
+
+# Python stuff
+*.pyc
