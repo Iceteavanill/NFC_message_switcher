@@ -31,7 +31,7 @@ rating_points_bool = ["Components straight",
 @st.dialog("Add a new contestant")
 def add_new_contestant():
     data_temp_storage = {}
-    for col in data_frame.columns:
+    for col in st.session_state.data.columns:
         if col not in wanted_cols_in_uploaded_dataset + rating_points_bool:
             data_temp_storage[col] = st.text_input(col)
 
@@ -91,24 +91,25 @@ if "data" in st.session_state:
             for idx, row in checked_in.iterrows():
                 if st.button(format_name(row), key=f"sidebar_{idx}"):
                     st.session_state.selected_index = idx
+                    st.session_state.Text_Input_Search = ""    
                     st.rerun()
     # --- Main UI ---
     st.write("## Contestant Evaluation")
 
 
     # --- Search section ---
-    search = st.text_input("Search by name").strip().lower()
+    search = st.text_input("Search by name", key="Text_Input_Search", value="").strip().lower()
     if search:
         matches = data_frame[data_frame["Name"].str.lower().str.contains(search)]
-        if not st.session_state["ignore_done"]:
+        if not st.session_state.ignore_done:
             matches = matches[matches["Finish Time"].isna()]
 
-        if not st.session_state["ignore_active"]:
+        if not st.session_state.ignore_active:
             matches = matches[matches["Start competition time"].isna()]
 
         if not matches.empty:
             names = matches.apply(format_name, axis=1)
-            selected_label = st.selectbox("Select contestant", names)
+            selected_label = st.selectbox("Select contestant", names, key="select_contestant")
             st.session_state.selected_index = matches[names == selected_label].index[0]
         else:
             st.warning("No matching contestants found.")
@@ -129,8 +130,8 @@ if "data" in st.session_state:
 
     # --- Display contestant if selected ---
     if st.session_state.selected_index is not None:
-        i = st.session_state.selected_index
-        person = data_frame.loc[i]
+        sel_idx = st.session_state.selected_index
+        person = data_frame.loc[sel_idx]
         
         st.write("### Selected contestant : "+ person["Name"])
         st.dataframe(data_frame.loc[data_frame["Name"] == person["Name"]], column_order=["Name", "Semester"])
@@ -138,7 +139,7 @@ if "data" in st.session_state:
         if pd.isna(person["Start competition time"]):
             if st.button("Start Timer", key="checkin"):
                 now = datetime.now()
-                data_frame.at[i, "Start competition time"] = now.isoformat()
+                data_frame.at[sel_idx, "Start competition time"] = now.isoformat()
                 st.success(f"Checked in at {now.strftime('%H:%M:%S')}")
                 st.rerun()
         else:
@@ -148,36 +149,36 @@ if "data" in st.session_state:
                 st.info(f"Checked in at {checkin_time.strftime('%H:%M:%S')}")
 
             with subcol2:
-                if st.button("reset timer"):
+                if st.button("reset timer", key=f"restart_{sel_idx}"):
                     # reset Button
-                    data_frame.at[i, "Start competition time"] = pd.NA
-                    data_frame.at[i, "Finish Time"] = pd.NA
+                    data_frame.at[sel_idx, "Start competition time"] = pd.NA
+                    data_frame.at[sel_idx, "Finish Time"] = pd.NA
                     st.rerun()
 
             # Evaluation inputs
             st.write("### Rating")
             rating_items_value = {}
-            for rating_point in rating_points_bool:
-                rating_items_value[rating_point] = st.checkbox(rating_point, value=bool(person[rating_point]))
+            for idx, rating_point in enumerate(rating_points_bool):
+                rating_items_value[rating_point] = st.checkbox(rating_point, value=bool(person[rating_point]), key=f"raiting_bool_{sel_idx}_{idx}")
             score = st.slider("Overal rating", 0, 100,
-                                   value=int(person["Score"]) if pd.notna(person["Score"]) else 50)
-            comments = st.text_area("Comments", value=person["Comments"] or "")
+                                   value=int(person["Score"]) if pd.notna(person["Score"]) else 50, key=f"slider{sel_idx}")
+            comments = st.text_area("Comments", value=person["Comments"] or "", key=f"comment_added_{sel_idx}")
 
-            if st.button("Submit Rating & Stop Timer"):
+            if st.button("Submit Rating & Stop Timer", key=f"stop_n_submit_{sel_idx}"):
                 now = datetime.now()
                 duration = int((now - checkin_time).total_seconds())
-                data_frame.at[i, "Finish Time"] = now.isoformat()
-                data_frame.at[i, "Duration (s)"] = duration
+                data_frame.at[sel_idx, "Finish Time"] = now.isoformat()
+                data_frame.at[sel_idx, "Duration (s)"] = duration
                 for rating_point in rating_points_bool:
-                    data_frame.at[i, rating_point] = rating_items_value[rating_point]
-                data_frame.at[i, "Score"] = score
-                data_frame.at[i, "Comments"] = comments 
-                data_frame.at[i, "Finishing order"], _ = data_frame[data_frame["Finish Time"].notna()].shape
+                    data_frame.at[sel_idx, rating_point] = rating_items_value[rating_point]
+                data_frame.at[sel_idx, "Score"] = score
+                data_frame.at[sel_idx, "Comments"] = comments 
+                data_frame.at[sel_idx, "Finishing order"] = data_frame[data_frame["Finish Time"].notna()].shape[0]
 
                 if not os.path.isdir("backup"):
                     os.makedirs("backup")
                 with open("backup/operations.csv", "a") as file_bk:
-                    data_to_write = [data_frame.at[i, "Name"], data_frame.at[i, "Semester"]] +\
+                    data_to_write = [data_frame.at[sel_idx, "Name"], data_frame.at[sel_idx, "Semester"]] +\
                                     [rating_items_value[val] for val in rating_points_bool] +\
                                     [duration, score]
                                     
