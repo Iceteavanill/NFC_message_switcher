@@ -209,12 +209,14 @@ class MyFrame(wx.Frame):
         self.console_out.Clear()
         self.generate_h_file()
         programmer_Book = {0:"TPSNAP", 1:"TPAICE"}
+        self.check_ipe_lockfile()
         if self.execute_command(self.build_command.Value, '/software/src', True) != 0:
             self.Programmer_error_label.Show()
             return
         if self.execute_command(self.upload_command.Value +" PROGTOOL=" +  programmer_Book[self.choice_programmer.Selection], '/software/src', True) != 0:
             self.Programmer_error_label.Show()
             self.programmer_task_running = False
+            self.check_ipe_lockfile()
             return
         self.programmer_task_running = True
 
@@ -277,6 +279,15 @@ class MyFrame(wx.Frame):
                                                              number_of_messages))
         self.console_out.AppendText("Generated Header File\n")
 
+    def check_ipe_lockfile(self):
+        lockfile_path = Path(str(Path.home()) + "\\.mchp_ipe\\2025.lock") 
+        inifile_path = Path(str(Path.home()) + "\\.mchp_ipe\\2025.ini")
+        if lockfile_path.is_file():
+            os.remove(lockfile_path)
+            self.console_out.AppendText(" --- Deleted Lock file ---\n")
+        if inifile_path.is_file():
+            os.remove(inifile_path)
+            self.console_out.AppendText(" --- Deleted ini file ---\n")
 
 # end of class MyFrame
 
