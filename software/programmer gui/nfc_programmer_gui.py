@@ -228,19 +228,22 @@ class MyFrame(wx.Frame):
 
 
     def program_device(self, event):  # wxGlade: MyFrame.<event_handler>
-        self.disable_control()
         programmer_Book = {0:"TPSNAP", 1:"TPAICE"}
+        self.disable_control()
+        self.wait_dialog.progress_gauge.SetValue(0)
         self.wait_dialog.Show()
         self.Programmer_error_label.Hide()
         self.console_out.Clear()
 
         def paralell_task():
-            ret = self.execute_command(self.build_command.Value, '/software/src', True)
             self.generate_h_file()
+            self.wait_dialog.progress_gauge.SetValue(1)
+            ret = self.execute_command(self.build_command.Value, '/software/src', True)
             if ret != 0:
                 wx.CallAfter(self.Programmer_error_label.Show)
                 wx.CallAfter(self.wait_dialog.Hide)
                 return
+            self.wait_dialog.progress_gauge.SetValue(2)
             self.check_ipe_lockfile()
             cmd = self.upload_command.Value +" PROGTOOL=" +  programmer_Book[self.choice_programmer.Selection]
             ret = self.execute_command(cmd, '/software/src', True)
@@ -358,9 +361,10 @@ class WaitNotification(wx.Dialog):
         sizer_1.Add(label_1, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
 
         label_2 = wx.StaticText(self, wx.ID_ANY, "The main window may seem unresponsive, please wait until it closes", style=wx.ALIGN_CENTER_HORIZONTAL)
-        sizer_1.Add(label_2, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 50)
+        sizer_1.Add(label_2, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
 
-        sizer_1.Add((0, 0), 0, 0, 0)
+        self.progress_gauge = wx.Gauge(self, wx.ID_ANY, range=4, style= wx.GA_HORIZONTAL)
+        sizer_1.Add(self.progress_gauge, 1, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
 
         self.SetSizer(sizer_1)
         sizer_1.Fit(self)
