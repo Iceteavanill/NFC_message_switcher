@@ -38,6 +38,9 @@ class MyFrame(wx.Frame):
         self.SetSize((600, 800))
         self.SetMinSize((600, 800))
         self.SetTitle("NFC tag Programmer")
+        _icon = wx.NullIcon
+        _icon.CopyFromBitmap(wx.ArtProvider.GetBitmap(wx.ART_PLUS, wx.ART_FRAME_ICON, (32, 32)))
+        self.SetIcon(_icon)
 
         self.window_1 = wx.SplitterWindow(self, wx.ID_ANY, style=wx.SP_LIVE_UPDATE | wx.SP_THIN_SASH)
         self.window_1.SetMinimumPaneSize(20)
@@ -356,6 +359,8 @@ class WaitNotification(wx.Dialog):
 
         label_2 = wx.StaticText(self, wx.ID_ANY, "The main window may seem unresponsive, please wait until it closes", style=wx.ALIGN_CENTER_HORIZONTAL)
         sizer_1.Add(label_2, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 50)
+
+        sizer_1.Add((0, 0), 0, 0, 0)
 
         self.SetSizer(sizer_1)
         sizer_1.Fit(self)
