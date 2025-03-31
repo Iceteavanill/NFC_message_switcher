@@ -1,0 +1,133 @@
+<h1 id="nfc-message-switcher">NFC message switcher</h1>
+<p>This project is an implementation of an NFC tag which is able to change the message. It communicates to a host device. It was developed to be quickly assembled and easy to use but still be a bit more than a blinking light. It uses the reference implementation for the <a href="https://github.com/microchip-pic-avr-examples/attiny1627-bare-metal-twi-mplab">bare metal TWI driver</a>.
+<img src="../../pictures/render_blue.png" alt="PCB render" width="500"></p>
+<h2 id="main-principle-of-operation">Main principle of operation</h2>
+<p>The main device is the <a href="https://www.st.com/resource/en/datasheet/st25dv04k.pdf">ST25DV04K</a>. 
+It can communicate via NFC and I2C. 
+When an NFC capable device is held near the PCB, the ST25DV04K starts to receive power and starts communicating with the device. 
+The Power that&#39;s transmitted is shared (energy harvesting mode) with a <a href="http://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-402-AVR-MCU-with-Core-Independent-Peripherals_and-picoPower-40001969A.pdf">ATtiny402</a>. 
+When powered it starts communicating via I2C and writes to the user accessible memory. 
+When the written data has been confirmed, it powers down.</p>
+<h2 id="details">Details</h2>
+<h3 id="power">Power</h3>
+<p>Power provider is the energy harvesting mode of the ST25DV04K, the power source is a NFC capable device that is in close proximity of the PCB.
+It is buffered via a 47μF capacitor.
+Because of that, it is essential to keep the power consumption of the ATtiny as low as possible.
+Consult the source code for more details.</p>
+<h3 id="link-arbitration">Link arbitration</h3>
+<p>The ST25DV04K does only support I2C <em>or</em> NFC active at the same time. 
+However, it has an open drain output that can be used to sense the current activity. 
+Low, signals that the device is currently busy. 
+The ATtiny then waits for the device to be available, by waiting in sleep. 
+A hardware interrupt is not yet implemented.</p>
+<h3 id="device-configuration">Device configuration</h3>
+<p>The ST25DV04K needs some configuration for correct operation. 
+The energy harvesting mode must be enabled/forced at startup. 
+Also, the GPO mode must be set to RF_ACTIVITY_EN to enable better link arbitration.
+The configuration happens after the ATtiny has been programmed once.</p>
+<h3 id="antenna">Antenna</h3>
+<p>The antenna / coil design is based on a <a href="https://www.researchgate.net/publication/339137261_Inductance_Formula_for_Rectangular_Planar_Spiral_Inductors_with_Rectangular_Conductor_Cross_Section">paper</a> from Hubert Aebischer. 
+The ST25DV04K has an internal tuning capacitor which should be assumed to be 29pF.
+Based on that, the inductance should be 4.75μH. </p>
+<h3 id="formfactor">Formfactor</h3>
+<p>The PCB dimensions are the same as a credit card.
+It is however quite a bit thicker.</p>
+<h1 id="building-your-own">Building your own</h1>
+<blockquote>
+<p>Note a release is not yet available. It will be provided soon.</p>
+</blockquote>
+<h2 id="sourcing">Sourcing</h2>
+<p>The following parts are needed to recreate this Project (as well as the PCB):</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Reference</th>
+<th style="text-align:center">Value</th>
+<th style="text-align:center">Qty</th>
+<th style="text-align:center">Digikey number</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">C1, C3</td>
+<td style="text-align:center">0.1uF</td>
+<td style="text-align:center">2</td>
+<td style="text-align:center">1276-1000-1-ND</td>
+</tr>
+<tr>
+<td style="text-align:center">C2</td>
+<td style="text-align:center">47uF</td>
+<td style="text-align:center">1</td>
+<td style="text-align:center">1276-3063-2-ND</td>
+</tr>
+<tr>
+<td style="text-align:center">R1, R2</td>
+<td style="text-align:center">4k7</td>
+<td style="text-align:center">2</td>
+<td style="text-align:center">MMA-4.7KACT-ND</td>
+</tr>
+<tr>
+<td style="text-align:center">U1</td>
+<td style="text-align:center">ATtiny402</td>
+<td style="text-align:center">1</td>
+<td style="text-align:center">ATTINY402-SSNRCT-ND</td>
+</tr>
+<tr>
+<td style="text-align:center">U2</td>
+<td style="text-align:center">ST25DV04K</td>
+<td style="text-align:center">1</td>
+<td style="text-align:center">497-17123-1-ND</td>
+</tr>
+</tbody>
+</table>
+<h2 id="assembly">Assembly</h2>
+<p>There are no special requirements for the assembly of the PCB&#39;s.</p>
+<h2 id="software">Software</h2>
+<p>You can use the provided released hex file, however it is recommended to customize the software to your own taste. 
+The provided python script should be used to generate custom messages. 
+Edit the <code>message_as_text_list</code> list with your messages and then run the script:</p>
+<pre><code class="lang-py"><span class="hljs-attribute">message_as_text_list</span> = [<span class="hljs-string">"Test 1"</span>,
+                        <span class="hljs-string">"Test 2 a bit longer"</span>,
+                        <span class="hljs-string">"Test 3 even looooooooooooooooooooooooooonger"</span>,
+                        <span class="hljs-string">"https://www.youtube.com/watch?v=dQw4w9WgXcQ"</span>,
+                        <span class="hljs-string">"spotify:track:4cOdK2wGLETKBW3PvgPWqT"</span>
+]
+</code></pre>
+<p>It regenerates the <code>nfc_messages.h</code>. 
+To recompile this code you need the XC8 compiler from microchip.
+The following settings should be used:</p>
+<table>
+<thead>
+<tr>
+<th>Flags</th>
+<th>commands</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Global</td>
+<td>-gdwarf-3 -mconst-data-in-progmem -mno-const-data-in-config-mapped-progmem</td>
+</tr>
+<tr>
+<td>compiler</td>
+<td>-funsigned-char -funsigned-bitfields -Wall -O2 -fno-common</td>
+</tr>
+<tr>
+<td>linker</td>
+<td>&quot;libm&quot; -Wl,--gc-sections</td>
+</tr>
+</tbody>
+</table>
+<p>A snap programmer or similar is also needed to upload to the ATtiny.</p>
+<h2 id="batch-programming">Batch programming</h2>
+<p>Many devices in a row can be programmed with the programming jig:</p>
+<p><img src="../../pictures/programming%20jig.png" alt="programming jig" width="500"></p>
+<p>It was designed in Onshape. 
+I used pogopins that I had on hand. 
+You probably want to customize it to your current stock. 
+You find the Onshape document <a href="https://cad.onshape.com/documents/450623688917edcaa975b9e7/w/39588c936aa9381f65fac7c0/e/be57d568f84f27791dc539d2?renderMode=0&amp;uiState=67cfd948ca833f6780730f6a">here</a>.</p>
+<h1 id="caveat">Caveat</h1>
+<p>It must be noted that the current design has a (obvious) flaw. 
+The ATtiny is in the middle of the coil and <em>probably</em> quite affected by the activity of it. 
+When combined with the nonideal power delivery method, this can significantly impair functionality at times (The I2C content that is written gets verified but I2C has no error correcting method).
+Some more analysis in that regard is not yet made.</p>

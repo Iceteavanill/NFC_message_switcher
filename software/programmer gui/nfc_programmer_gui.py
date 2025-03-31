@@ -16,10 +16,9 @@ import ndef # Note : install ndefLIB and not ndef
 Git_repo_path = Path.cwd()
 if not(str(Path.cwd()).endswith('NFC_message_switcher')):
     # was run in place -> go up a folder
-    working_path = Git_repo_path.parents[1]
+    Git_repo_path = Git_repo_path.parents[1]
 
 sys.path.append(Git_repo_path.as_posix() + '\\software')
-
 from dataGenerator import message_as_text_list, generate_nfc_c_table, header_content_template
 
 # begin wxGlade: dependencies
@@ -27,8 +26,35 @@ import wx.grid
 # end wxGlade
 
 # begin wxGlade: extracode
+import wx.html2
 # end wxGlade
 
+
+
+
+class WaitNotification(wx.Dialog):
+    def __init__(self, *args, **kwds):
+        # begin wxGlade: WaitNotification.__init__
+        kwds["style"] = kwds.get("style", 0) | wx.STAY_ON_TOP
+        wx.Dialog.__init__(self, *args, **kwds)
+        self.SetTitle("Programmer wait")
+        self.Hide()
+
+        sizer_1 = wx.BoxSizer(wx.VERTICAL)
+
+        label_1 = wx.StaticText(self, wx.ID_ANY, "Programming! please wait")
+        label_1.SetFont(wx.Font(21, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, 0, ""))
+        sizer_1.Add(label_1, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
+
+        label_2 = wx.StaticText(self, wx.ID_ANY, "The main window may seem unresponsive, please wait until it closes", style=wx.ALIGN_CENTER_HORIZONTAL)
+        sizer_1.Add(label_2, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 50)
+
+        self.SetSizer(sizer_1)
+        sizer_1.Fit(self)
+
+        self.Layout()
+        self.Centre()
+        # end wxGlade
 
 class MyFrame(wx.Frame):
     def __init__(self, *args, **kwds):
@@ -39,13 +65,22 @@ class MyFrame(wx.Frame):
         self.SetMinSize((600, 800))
         self.SetTitle("NFC tag Programmer")
 
-        notebook_Console_Sizer = wx.BoxSizer(wx.VERTICAL)
+        self.window_1 = wx.SplitterWindow(self, wx.ID_ANY, style=wx.SP_LIVE_UPDATE | wx.SP_THIN_SASH)
+        self.window_1.SetMinimumPaneSize(20)
+        self.window_1.SetSashGravity(1.0)
 
-        self.notebook = wx.Notebook(self, wx.ID_ANY)
-        notebook_Console_Sizer.Add(self.notebook, 0, wx.EXPAND, 0)
+        self.notebook = wx.Notebook(self.window_1, wx.ID_ANY)
 
-        self.device_programming = wx.Panel(self.notebook, wx.ID_ANY)
-        self.notebook.AddPage(self.device_programming, "device programming")
+        self.window_2 = wx.SplitterWindow(self.notebook, wx.ID_ANY, style=wx.SP_3D | wx.SP_LIVE_UPDATE)
+        self.window_2.SetMinimumPaneSize(20)
+        self.window_2.SetSashGravity(0.5)
+        self.notebook.AddPage(self.window_2, "device programming")
+
+        self.web_view_panel = wx.html2.WebView.New(self.window_2, wx.ID_ANY)
+        self.web_view_panel.LoadURL(str(Git_repo_path) + "\\software\\programmer gui\\manual.htm")
+
+        self.device_programming = wx.ScrolledWindow(self.window_2, wx.ID_ANY, style=wx.FULL_REPAINT_ON_RESIZE)
+        self.device_programming.SetScrollRate(10, 10)
 
         programming_Main_Sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -64,16 +99,16 @@ class MyFrame(wx.Frame):
         grid_sizer_1 = wx.FlexGridSizer(2, 2, 0, 0)
         programming_Main_Sizer.Add(grid_sizer_1, 1, wx.ALIGN_CENTER_HORIZONTAL, 0)
 
-        label_1 = wx.StaticText(self.device_programming, wx.ID_ANY, "iPhone compatability mode : ")
-        label_1.SetToolTip("The iPhone cant handle text on its own. This option adds a url that displays text to the text")
-        grid_sizer_1.Add(label_1, 0, wx.ALL, 10)
+        label_5 = wx.StaticText(self.device_programming, wx.ID_ANY, "iPhone compatability mode : ")
+        label_5.SetToolTip("The iPhone cant handle text on its own. This option adds a url that displays text to the text")
+        grid_sizer_1.Add(label_5, 0, wx.ALL, 10)
 
         self.checkbox_Iphone_comp_Mode = wx.CheckBox(self.device_programming, wx.ID_ANY, "")
         self.checkbox_Iphone_comp_Mode.SetToolTip("The iPhone cant handle text on its own. This option adds a url that displays text to the text")
         grid_sizer_1.Add(self.checkbox_Iphone_comp_Mode, 0, wx.ALL, 10)
 
-        label_5 = wx.StaticText(self.device_programming, wx.ID_ANY, "Remove predefined texts: ")
-        grid_sizer_1.Add(label_5, 0, wx.ALL, 10)
+        label_11 = wx.StaticText(self.device_programming, wx.ID_ANY, "Remove predefined texts: ")
+        grid_sizer_1.Add(label_11, 0, wx.ALL, 10)
 
         self.checkbox_remove_defaults = wx.CheckBox(self.device_programming, wx.ID_ANY, "", style=wx.CHK_2STATE)
         grid_sizer_1.Add(self.checkbox_remove_defaults, 0, wx.ALL, 10)
@@ -107,7 +142,7 @@ class MyFrame(wx.Frame):
         self.notebook_1_pane_3 = wx.Panel(self.notebook, wx.ID_ANY)
         self.notebook.AddPage(self.notebook_1_pane_3, "programming setup")
 
-        grid_sizer_2 = wx.FlexGridSizer(7, 2, 0, 10)
+        grid_sizer_2 = wx.FlexGridSizer(8, 2, 0, 10)
 
         label_3 = wx.StaticText(self.notebook_1_pane_3, wx.ID_ANY, "Programer selected :", style=wx.ALIGN_LEFT)
         grid_sizer_2.Add(label_3, 0, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.LEFT, 10)
@@ -159,14 +194,19 @@ class MyFrame(wx.Frame):
         self.button_stop_programmer.SetToolTip("stops the programmer task")
         grid_sizer_2.Add(self.button_stop_programmer, 0, wx.ALL, 10)
 
-        self.console_out = wx.TextCtrl(self, wx.ID_ANY, "", style=wx.BORDER_NONE | wx.TE_AUTO_URL | wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP)
-        notebook_Console_Sizer.Add(self.console_out, 1, wx.EXPAND, 0)
+        grid_sizer_2.Add((0, 0), 0, 0, 0)
+
+        grid_sizer_2.Add((0, 0), 0, 0, 0)
+
+        self.console_out = wx.TextCtrl(self.window_1, wx.ID_ANY, "", style=wx.BORDER_NONE | wx.TE_AUTO_URL | wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP)
 
         self.notebook_1_pane_3.SetSizer(grid_sizer_2)
 
         self.device_programming.SetSizer(programming_Main_Sizer)
 
-        self.SetSizer(notebook_Console_Sizer)
+        self.window_2.SplitVertically(self.web_view_panel, self.device_programming)
+
+        self.window_1.SplitHorizontally(self.notebook, self.console_out)
 
         self.Layout()
         self.Centre()
@@ -178,12 +218,14 @@ class MyFrame(wx.Frame):
         # end wxGlade
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.programmer_task_running = False
+        self.wait_dialog = WaitNotification(self)
 
     def grid_changed(self, event):  # wxGlade: MyFrame.<event_handler>
         empty_rows = False
         self.grid_data_in.AutoSizeColumns(True)
         if self.grid_data_in.GetNumberRows() >= self.spin_ctrl_max_message_count.Value:
             self.device_programming.Layout()
+            self.device_programming.FitInside()
             return
 
         for row in range(self.grid_data_in.GetNumberRows()):
@@ -193,6 +235,8 @@ class MyFrame(wx.Frame):
         if empty_rows == False:
             self.grid_data_in.AppendRows(1)
         self.device_programming.Layout()
+        self.device_programming.FitInside()
+
 
     def Reset_Data_entered(self, event):  # wxGlade: MyFrame.<event_handler>
         self.grid_data_in.ClearGrid()
@@ -203,22 +247,37 @@ class MyFrame(wx.Frame):
         self.checkbox_Iphone_comp_Mode.SetValue(False)
         self.checkbox_remove_defaults.SetValue(False)
         self.console_out.Clear()
+        self.device_programming.FitInside()
+
 
     def program_device(self, event):  # wxGlade: MyFrame.<event_handler>
+        self.disable_control()
+        programmer_Book = {0:"TPSNAP", 1:"TPAICE"}
+        self.wait_dialog.Show()
         self.Programmer_error_label.Hide()
         self.console_out.Clear()
-        self.generate_h_file()
-        programmer_Book = {0:"TPSNAP", 1:"TPAICE"}
-        self.check_ipe_lockfile()
-        if self.execute_command(self.build_command.Value, '/software/src', True) != 0:
-            self.Programmer_error_label.Show()
-            return
-        if self.execute_command(self.upload_command.Value +" PROGTOOL=" +  programmer_Book[self.choice_programmer.Selection], '/software/src', True) != 0:
-            self.Programmer_error_label.Show()
-            self.programmer_task_running = False
+
+        def paralell_task():
+            ret = self.execute_command(self.build_command.Value, '/software/src', True)
+            self.generate_h_file()
+            if ret != 0:
+                wx.CallAfter(self.Programmer_error_label.Show)
+                wx.CallAfter(self.wait_dialog.Hide)
+                return
             self.check_ipe_lockfile()
-            return
-        self.programmer_task_running = True
+            cmd = self.upload_command.Value +" PROGTOOL=" +  programmer_Book[self.choice_programmer.Selection]
+            ret = self.execute_command(cmd, '/software/src', True)
+            if ret != 0:
+                wx.CallAfter(self.Programmer_error_label.Show)
+                self.programmer_task_running = False
+                self.check_ipe_lockfile()
+            else:
+                self.programmer_task_running = True
+            wx.CallAfter(self.wait_dialog.Hide)
+            wx.CallAfter(self.enable_user_input)
+
+        threading.Thread(target=paralell_task).start()
+        return
 
     def stop_programmer(self, event):  # wxGlade: MyFrame.<event_handler>
         self.execute_command(self.kill_command.Value, '/software/src', True)
@@ -243,11 +302,10 @@ class MyFrame(wx.Frame):
             universal_newlines=True,
             env=env
         )
-        self.console_out.AppendText(result.stdout)
+        wx.CallAfter(self.console_out.AppendText, result.stdout)
         return result.returncode
 
     def generate_h_file(self):
-
         messages_user_in = []
         messages_lines = []
         name_of_messagearray = []
@@ -288,6 +346,23 @@ class MyFrame(wx.Frame):
         if inifile_path.is_file():
             os.remove(inifile_path)
             self.console_out.AppendText(" --- Deleted ini file ---\n")
+
+
+    def disable_control(self):
+        self.button_programm_device.Disable()
+        self.button_reset_data.Disable()
+        self.grid_data_in.Disable()
+        self.checkbox_Iphone_comp_Mode.Disable()
+        self.checkbox_remove_defaults.Disable()
+        self.notebook.Disable()
+
+    def enable_user_input(self):
+        self.button_programm_device.Enable()
+        self.button_reset_data.Enable()
+        self.grid_data_in.Enable()
+        self.checkbox_Iphone_comp_Mode.Enable()
+        self.checkbox_remove_defaults.Enable()
+        self.notebook.Enable()        
 
 # end of class MyFrame
 
