@@ -27,6 +27,10 @@ rating_points_bool = ["Components straight",
                       "Melf Stripes aligned" 
                       ]
 
+needed_cols_dataset = ["Name",
+                       "Semester"]
+
+st.set_page_config("Le rating page", page_icon=":material/reviews:", layout="wide")
 
 @st.dialog("Add a new contestant")
 def add_new_contestant():
@@ -51,6 +55,11 @@ def init_csv(data_frame):
     for col in wanted_cols_in_uploaded_dataset + rating_points_bool:
         if col not in data_frame.columns:
             data_frame[col] = None
+
+    for col in needed_cols_dataset:
+        if col not in data_frame.columns:
+            raise TypeError(f"Imported dataset lacked column \"{col}\". The folowing colums MUST be provided:{needed_cols_dataset}")
+
     return data_frame
 
 # Format display name
@@ -157,9 +166,7 @@ if "data" in st.session_state:
 
             # Evaluation inputs
             st.write("### Rating")
-            rating_items_value = {}
-            for idx, rating_point in enumerate(rating_points_bool):
-                rating_items_value[rating_point] = st.checkbox(rating_point, value=bool(person[rating_point]), key=f"raiting_bool_{sel_idx}_{idx}")
+            rating_items_value = st.pills("Rating blobs", rating_points_bool, selection_mode="multi", default=None, label_visibility="collapsed")
             score = st.slider("Overal rating", 0, 100,
                                    value=int(person["Score"]) if pd.notna(person["Score"]) else 50, key=f"slider{sel_idx}")
             comments = st.text_area("Comments", value=person["Comments"] or "", key=f"comment_added_{sel_idx}")
@@ -170,19 +177,25 @@ if "data" in st.session_state:
                 data_frame.at[sel_idx, "Finish Time"] = now.isoformat()
                 data_frame.at[sel_idx, "Duration (s)"] = duration
                 for rating_point in rating_points_bool:
-                    data_frame.at[sel_idx, rating_point] = rating_items_value[rating_point]
+                    data_frame.at[sel_idx, rating_point] = True if rating_point in rating_items_value else False
                 data_frame.at[sel_idx, "Score"] = score
                 data_frame.at[sel_idx, "Comments"] = comments 
-                data_frame.at[sel_idx, "Finishing order"] = data_frame[data_frame["Finish Time"].notna()].shape[0]
+                finishing_order = data_frame[data_frame["Finish Time"].notna()].shape[0]
+                data_frame.at[sel_idx, "Finishing order"] = finishing_order
 
                 if not os.path.isdir("backup"):
                     os.makedirs("backup")
+                if not os.path.exists("backup/operations.csv"):
+                    with open("backup/operations.csv", "a") as file_bk:
+                        file_bk.write(",".join(needed_cols_dataset + 
+                                               ["Duration (s)","Comments","Score","Finishing order"]+
+                                               rating_points_bool) + '\n')
                 with open("backup/operations.csv", "a") as file_bk:
                     data_to_write = [data_frame.at[sel_idx, "Name"], data_frame.at[sel_idx, "Semester"]] +\
-                                    [rating_items_value[val] for val in rating_points_bool] +\
-                                    [duration, score]
-                                    
-                    file_bk.write(";".join(str(x) for x in data_to_write) + '\n')
+                                    [duration, comments, score, finishing_order] +\
+                                    [True if point in rating_items_value else False for point in rating_points_bool ]
+
+                    file_bk.write(",".join(str(x) for x in data_to_write) + '\n')
                 
                 st.success(f"Rating saved. Duration: {duration} seconds.")
                 st.session_state.selected_index = None
