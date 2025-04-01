@@ -46,6 +46,6 @@ end_uploader:
 
 clean:
 	@echo "cleaning"
-	rm -f $(OBJ) $(TARGET) $(HEXFILE)
+	rm -f $(OBJ) $(TARGET) $(HEXFILE) *.log
 
 .PHONY: all clean hex run_script

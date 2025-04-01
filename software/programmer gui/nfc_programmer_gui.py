@@ -116,10 +116,11 @@ class MyFrame(wx.Frame):
         self.Programmer_error_label.Hide()
         sub_sizer_1.Add(self.Programmer_error_label, 0, wx.ALL | wx.EXPAND | wx.RESERVE_SPACE_EVEN_IF_HIDDEN, 10)
 
-        self.notebook_1_pane_3 = wx.Panel(self.notebook, wx.ID_ANY)
+        self.notebook_1_pane_3 = wx.ScrolledWindow(self.notebook, wx.ID_ANY, style=wx.TAB_TRAVERSAL)
+        self.notebook_1_pane_3.SetScrollRate(10, 10)
         self.notebook.AddPage(self.notebook_1_pane_3, "programming setup")
 
-        grid_sizer_2 = wx.FlexGridSizer(8, 2, 0, 10)
+        grid_sizer_2 = wx.FlexGridSizer(9, 2, 0, 10)
 
         label_3 = wx.StaticText(self.notebook_1_pane_3, wx.ID_ANY, "Programer selected :", style=wx.ALIGN_LEFT)
         grid_sizer_2.Add(label_3, 0, wx.ALIGN_CENTER_VERTICAL | wx.EXPAND | wx.LEFT, 10)
@@ -141,6 +142,14 @@ class MyFrame(wx.Frame):
         self.path_to_source_text.SetMinSize((600, 23))
         self.path_to_source_text.SetValue(Git_repo_path.as_posix().replace('C:', '/c'))
         grid_sizer_2.Add(self.path_to_source_text, 0, wx.ALL, 10)
+
+        label_13 = wx.StaticText(self.notebook_1_pane_3, wx.ID_ANY, "path_to_IPE_lock_files :", style=wx.ALIGN_CENTER_HORIZONTAL)
+        grid_sizer_2.Add(label_13, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
+
+        self.path_to_IPE_lock_files = wx.TextCtrl(self.notebook_1_pane_3, wx.ID_ANY, "<Auto filled>", style=wx.TE_NO_VSCROLL | wx.TE_PROCESS_ENTER)
+        self.path_to_IPE_lock_files.SetMinSize((600, 23))
+        self.path_to_IPE_lock_files.Value = str(Path.home()) + "\\.mchp_ipe\\"
+        grid_sizer_2.Add(self.path_to_IPE_lock_files, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 10)
 
         label_6 = wx.StaticText(self.notebook_1_pane_3, wx.ID_ANY, "Build command :", style=wx.ALIGN_CENTER_HORIZONTAL)
         grid_sizer_2.Add(label_6, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
@@ -171,9 +180,13 @@ class MyFrame(wx.Frame):
         self.button_stop_programmer.SetToolTip("stops the programmer task")
         grid_sizer_2.Add(self.button_stop_programmer, 0, wx.ALL, 10)
 
-        grid_sizer_2.Add((0, 0), 0, 0, 0)
+        label_12 = wx.StaticText(self.notebook_1_pane_3, wx.ID_ANY, "clean src folder", style=wx.ALIGN_CENTER_HORIZONTAL)
+        grid_sizer_2.Add(label_12, 0, wx.ALIGN_CENTER_VERTICAL | wx.LEFT, 10)
 
-        grid_sizer_2.Add((0, 0), 0, 0, 0)
+        self.clean_src_folder = wx.Button(self.notebook_1_pane_3, wx.ID_ANY, "clean src folder")
+        self.clean_src_folder.SetMinSize((150, 40))
+        self.clean_src_folder.SetToolTip("stops the programmer task")
+        grid_sizer_2.Add(self.clean_src_folder, 0, wx.ALL, 10)
 
         self.console_out = wx.TextCtrl(self.window_1, wx.ID_ANY, "", style=wx.BORDER_NONE | wx.TE_AUTO_URL | wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_WORDWRAP)
 
@@ -192,6 +205,7 @@ class MyFrame(wx.Frame):
         self.button_reset_data.Bind(wx.EVT_BUTTON, self.Reset_Data_entered)
         self.button_programm_device.Bind(wx.EVT_BUTTON, self.program_device)
         self.button_stop_programmer.Bind(wx.EVT_BUTTON, self.stop_programmer)
+        self.clean_src_folder.Bind(wx.EVT_BUTTON, self.clean_src_folder_aux_files)
         # end wxGlade
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.programmer_task_running = False
@@ -318,8 +332,8 @@ class MyFrame(wx.Frame):
         self.console_out.AppendText("Generated Header File\n")
 
     def check_ipe_lockfile(self):
-        lockfile_path = Path(str(Path.home()) + "\\.mchp_ipe\\2025.lock") 
-        inifile_path = Path(str(Path.home()) + "\\.mchp_ipe\\2025.ini")
+        lockfile_path = Path(self.path_to_IPE_lock_files.Value + "2025.lock") 
+        inifile_path = Path(self.path_to_IPE_lock_files.Value + "2025.ini")
         if lockfile_path.is_file():
             os.remove(lockfile_path)
             self.console_out.AppendText(" --- Deleted Lock file ---\n")
@@ -343,6 +357,9 @@ class MyFrame(wx.Frame):
         self.checkbox_Iphone_comp_Mode.Enable()
         self.checkbox_remove_defaults.Enable()
         self.notebook.Enable()        
+
+    def clean_src_folder_aux_files(self, event):  # wxGlade: MyFrame.<event_handler>
+        self.execute_command('make clean', '/software/src', True)
 
 # end of class MyFrame
 
