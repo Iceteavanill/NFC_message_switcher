@@ -285,7 +285,7 @@ class MyFrame(wx.Frame):
         self.Destroy()
 
     def execute_command(self, cmd, where = '', addSourceDirectory = False) -> int:
-        cmd =  'cd ' + (self.path_to_source_text.Value if addSourceDirectory else '') + where + ' && '+  cmd
+        cmd =  'cd ' + (self.path_to_source_text.Value.replace(" ", "\\ ") if addSourceDirectory else '') + where + ' && '+  cmd
         env = os.environ.copy()
         env["PATH"] = "/mingw64/bin:/usr/bin:/bin:" + env.get("PATH", "")
         result = subprocess.run(
@@ -377,11 +377,15 @@ class WaitNotification(wx.Dialog):
         label_1.SetFont(wx.Font(21, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, 0, ""))
         sizer_1.Add(label_1, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
 
+        label_3 = wx.StaticText(self, wx.ID_ANY, "Press the PCB firmly into the programming fixture until this window vanishes!")
+        label_3.SetFont(wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD, 0, ""))
+        sizer_1.Add(label_3, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
+
         label_2 = wx.StaticText(self, wx.ID_ANY, "The main window may seem unresponsive, please wait until it closes", style=wx.ALIGN_CENTER_HORIZONTAL)
         sizer_1.Add(label_2, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
 
         self.progress_gauge = wx.Gauge(self, wx.ID_ANY, range=4, style= wx.GA_HORIZONTAL)
-        sizer_1.Add(self.progress_gauge, 1, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 10)
+        sizer_1.Add(self.progress_gauge, 1, wx.ALL | wx.EXPAND, 10)
 
         self.SetSizer(sizer_1)
         sizer_1.Fit(self)

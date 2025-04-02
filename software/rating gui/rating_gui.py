@@ -24,7 +24,9 @@ wanted_cols_in_uploaded_dataset = ["Start competition time",
 rating_points_bool = ["Components straight", 
                       "Nothing burned", 
                       "No solder peaks", 
-                      "Melf Stripes aligned" 
+                      "Melf Stripes aligned",
+                      "PCB has a name on it ",
+                      "no cold solder joints"
                       ]
 
 needed_cols_dataset = ["Name",
