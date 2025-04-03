@@ -1,6 +1,6 @@
 "Reference","Value","Datasheet","Footprint","Qty","DNP","Digikeynumber"
 "C1","0.1uF","~","Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder","1","","1276-1000-1-ND"
-"C2","47uF","~","Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder","1",""," 1276-3063-2-ND"
+"C2","47uF","~","Capacitor_SMD:C_1206_3216Metric_Pad1.33x1.80mm_HandSolder","1","","1276-3063-2-ND"
 "C3","0.1uF","~","Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder","1","DNP","1276-1000-1-ND"
 "R1,R2","4k7","~","Resistor_SMD:R_MiniMELF_MMA-0204","2",""," MMA-4.7KACT-ND"
 "U1","ATtiny402","http://ww1.microchip.com/downloads/en/DeviceDoc/ATtiny202-402-AVR-MCU-with-Core-Independent-Peripherals_and-picoPower-40001969A.pdf","Package_SO:SOIC-8_3.9x4.9mm_P1.27mm","1","","ATTINY402-SSNRCT-ND"
