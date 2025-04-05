@@ -51,7 +51,8 @@ It is however quite a bit thicker.
 
 # Building your own
 
-> Note a release is not yet available. It will be provided soon.
+All required files to recreate this project can be found [here](https://github.com/Iceteavanill/NFC_message_switcher/releases/tag/1.0.0). 
+
 
 ## Sourcing
 
@@ -67,12 +68,47 @@ The following parts are needed to recreate this Project (as well as the PCB):
 
 ## Assembly
 
-There are no special requirements for the assembly of the PCB's.
+There are no special requirements for the assembly of the PCB's. 
+If you are used to soldering SMD components it shouldn0t be a problem. 
 
 ## Software
 
 You can use the provided released hex file, however it is recommended to customize the software to your own taste. 
-The provided python script should be used to generate custom messages. 
+
+There are multiple options to customize the software
+
+### Overview
+
+Customizing the software always requires a rebuild of the firmware of the Attiny. 
+The XC8 compiler from microchip is recommended. 
+The following flags should be used:
+
+| Flags    | commands                                                                   |
+|----------|----------------------------------------------------------------------------|
+| Global   | -gdwarf-3 -mconst-data-in-progmem -mno-const-data-in-config-mapped-progmem |
+| compiler | -funsigned-char -funsigned-bitfields -Wall -O2 -fno-common                 |
+| linker   | "libm" -Wl,--gc-sections                                                   |
+
+A makefile is already prepared with all the required flags. 
+If you install a later version you might have to alter the paths a little.
+
+For customization, only a header file has to be altered (```nfc_messages.h```).  
+There are multiple ways of accomplishing that:
+
+ * editing the header directly (not recommended)
+ * using the python script
+ * using the gui (recommended)
+
+### Editing the header directly
+
+Editing the header directly is not recommended because the required data must be in the NDEF format. 
+Manually generating that is very tedious. 
+If you have special needs however, like encoding special data types, you have to do it this way because anything else has not been implemented.
+
+### Using the pyton script
+
+The ```dataGenerator.py``` python script can be used to quickly generate custom messages. 
+It requires the NDEFLib python library. 
 Edit the ```message_as_text_list``` list with your messages and then run the script:
 ```py
 message_as_text_list = ["Test 1",
@@ -82,17 +118,36 @@ message_as_text_list = ["Test 1",
                         "spotify:track:4cOdK2wGLETKBW3PvgPWqT"
 ]
 ```
-It regenerates the ```nfc_messages.h```. 
-To recompile this code you need the XC8 compiler from microchip.
-The following settings should be used:
+### Using the gui
 
-| Flags    | commands                                                                   |
-|----------|----------------------------------------------------------------------------|
-| Global   | -gdwarf-3 -mconst-data-in-progmem -mno-const-data-in-config-mapped-progmem |
-| compiler | -funsigned-char -funsigned-bitfields -Wall -O2 -fno-common                 |
-| linker   | "libm" -Wl,--gc-sections                                                   |
+A gui has been made to quickly program multiple NFC tags. 
+It requires WXpython and uses the previously mentioned script and the ```message_as_text_list```.
 
-A snap programmer or similar is also needed to upload to the ATtiny.
+Programming steps
+
+1. Step:
+
+Enter your desired message(s) in the tabele at the top. 
+Links to websites videos or Spotify songs are also allowed.
+
+![picture of the table](/pictures/manual_table.png)
+
+2. Step:
+
+If your main device is an iPhone check the ```iPhone compatability mode```. 
+IPhones are unable to read text from a NFC device, and the text messages have to be encoded as a website.
+
+3. Step:
+
+Some default messages are added to the list automatically. If you dont want that, you can disable that with the checkbox ```Remove predefined texts```. 
+The ```message_as_text_list``` is used as a source.
+
+4. Step:
+
+Connect your programmer to the tag and press program device. 
+The build and upload steps are automatically executed.
+
+A snap programmer or similar is needed to upload to the ATtiny.
 
 ## Batch programming
 

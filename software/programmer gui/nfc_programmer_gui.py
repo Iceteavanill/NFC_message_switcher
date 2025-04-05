@@ -228,7 +228,6 @@ class MyFrame(wx.Frame):
         self.device_programming.Layout()
         self.device_programming.FitInside()
 
-
     def Reset_Data_entered(self, event):  # wxGlade: MyFrame.<event_handler>
         self.grid_data_in.ClearGrid()
         if self.grid_data_in.GetNumberRows() > 1:
@@ -239,7 +238,6 @@ class MyFrame(wx.Frame):
         self.checkbox_remove_defaults.SetValue(False)
         self.console_out.Clear()
         self.device_programming.FitInside()
-
 
     def program_device(self, event):  # wxGlade: MyFrame.<event_handler>
         programmer_Book = {0:"TPSNAP", 1:"TPAICE"}
@@ -256,6 +254,7 @@ class MyFrame(wx.Frame):
             if ret != 0:
                 wx.CallAfter(self.Programmer_error_label.Show)
                 wx.CallAfter(self.wait_dialog.Hide)
+                wx.CallAfter(self.enable_user_input)
                 return
             self.wait_dialog.progress_gauge.SetValue(2)
             self.check_ipe_lockfile()
@@ -285,6 +284,10 @@ class MyFrame(wx.Frame):
         self.Destroy()
 
     def execute_command(self, cmd, where = '', addSourceDirectory = False) -> int:
+        if not os.path.exists("C:\\msys64\\usr\\bin\\bash.exe"):
+            wx.CallAfter(self.console_out.AppendText, "Mingw is required for this software to work!")
+            return -1
+
         cmd =  'cd ' + (self.path_to_source_text.Value.replace(" ", "\\ ") if addSourceDirectory else '') + where + ' && '+  cmd
         env = os.environ.copy()
         env["PATH"] = "/mingw64/bin:/usr/bin:/bin:" + env.get("PATH", "")
@@ -340,7 +343,6 @@ class MyFrame(wx.Frame):
         if inifile_path.is_file():
             os.remove(inifile_path)
             self.console_out.AppendText(" --- Deleted ini file ---\n")
-
 
     def disable_control(self):
         self.button_programm_device.Disable()
