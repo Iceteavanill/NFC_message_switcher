@@ -77,11 +77,14 @@ You can use the provided released hex file, however it is recommended to customi
 
 There are multiple options to customize the software
 
+> [!WARNING]  
+> I tried making the process of using the software as easy as possible, however it may not be very easy/beginner-friendly in places.
+
 ### Overview
 
 Customizing the software always requires a rebuild of the firmware of the Attiny. 
 The XC8 compiler from microchip is recommended. 
-The following flags should be used:
+The following flags were used and are recommended:
 
 | Flags    | commands                                                                   |
 |----------|----------------------------------------------------------------------------|
@@ -122,12 +125,13 @@ message_as_text_list = ["Test 1",
 
 A gui has been made to quickly program multiple NFC tags. 
 It requires WXpython and uses the previously mentioned script and the ```message_as_text_list```.
+For uploading, it relies on the MPLAB IPE programming software and its command line interface.
 
-Programming steps
+Programming steps:
 
 1. Step:
 
-Enter your desired message(s) in the tabele at the top. 
+Enter your desired message(s) in the table at the top. 
 Links to websites videos or Spotify songs are also allowed.
 
 ![picture of the table](/pictures/manual_table.png)
@@ -139,15 +143,20 @@ IPhones are unable to read text from a NFC device, and the text messages have to
 
 3. Step:
 
-Some default messages are added to the list automatically. If you dont want that, you can disable that with the checkbox ```Remove predefined texts```. 
-The ```message_as_text_list``` is used as a source.
+Some default messages are added to the list automatically. If you don't want that, you can disable that with the checkbox ```Remove predefined texts```. 
+The ```message_as_text_list``` from ```dataGenerator.py``` is used as a source.
 
 4. Step:
 
 Connect your programmer to the tag and press program device. 
 The build and upload steps are automatically executed.
 
-A snap programmer or similar is needed to upload to the ATtiny.
+
+### Building and uploading
+
+In all options but the gui you have to manually build and then upload the firmware. 
+You can use the ``` make upload ``` command with the option ``` PROGTOOL= ``` to select the programmer that you have on hand. 
+See the documentation of the IPE programmer option to know which flag you have to use.
 
 ## Batch programming
 
@@ -159,6 +168,12 @@ It was designed in Onshape.
 I used pogopins that I had on hand. 
 You probably want to customize it to your current stock. 
 You find the Onshape document [here](https://cad.onshape.com/documents/450623688917edcaa975b9e7/w/39588c936aa9381f65fac7c0/e/be57d568f84f27791dc539d2?renderMode=0&uiState=67cfd948ca833f6780730f6a).
+
+## Rating GUI
+
+Because this PCB was designed as a competition PCB, a rating gui has been made using streamlit. 
+You can import a CSV of contestants and rate each one for time, quality and some other points. 
+It is meant to be customized to your particular use case. 
 
 # Caveat
 
