@@ -12,7 +12,8 @@ unwanted_cols_in_uploaded_dataset = ['Email',
                                      'Ich nehme am 16. April am E-Abend teil',
                                      'Fleisch / Vegetarisch',
                                      'Optional : Ich mag dunkles Bier',
-                                     'ID']
+                                     'ID',
+                                     'In Gruppe eingeteilt']
 
 wanted_cols_in_uploaded_dataset = ["Start competition time",
                                    "Finish Time",

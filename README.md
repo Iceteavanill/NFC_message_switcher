@@ -18,7 +18,7 @@ When the written data has been confirmed, it powers down.
 
 ### Power
 
-Power provider is the energy harvesting mode of the ST25DV04K, the power source is a NFC capable device that is in close proximity of the PCB.
+Power provider is the energy harvesting mode of the ST25DV04K, the power source is a NFC capable device that is in proximity of the PCB.
 It is buffered via a 47μF capacitor.
 Because of that, it is essential to keep the power consumption of the ATtiny as low as possible.
 Consult the source code for more details.

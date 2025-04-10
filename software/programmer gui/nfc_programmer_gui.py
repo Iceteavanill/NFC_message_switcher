@@ -11,6 +11,7 @@ import sys
 import threading
 from pathlib import Path
 import ndef # Note : install ndefLIB and not ndef
+import random
 
 # small hack to get current path to work
 Git_repo_path = Path.cwd()
@@ -255,6 +256,7 @@ class MyFrame(wx.Frame):
                 wx.CallAfter(self.Programmer_error_label.Show)
                 wx.CallAfter(self.wait_dialog.Hide)
                 wx.CallAfter(self.enable_user_input)
+                wx.CallAfter(self.write_log_message, False)
                 return
             self.wait_dialog.progress_gauge.SetValue(2)
             self.check_ipe_lockfile()
@@ -264,8 +266,10 @@ class MyFrame(wx.Frame):
                 wx.CallAfter(self.Programmer_error_label.Show)
                 self.programmer_task_running = False
                 self.check_ipe_lockfile()
+                wx.CallAfter(self.write_log_message, False)
             else:
                 self.programmer_task_running = True
+                wx.CallAfter(self.write_log_message, True)
             wx.CallAfter(self.wait_dialog.Hide)
             wx.CallAfter(self.enable_user_input)
 
@@ -306,6 +310,7 @@ class MyFrame(wx.Frame):
         messages_user_in = []
         messages_lines = []
         name_of_messagearray = []
+        programming_messages = []
 
         for row in range(self.grid_data_in.GetNumberRows()):
             if self.grid_data_in.GetCellValue(row, 0) != "":
@@ -314,16 +319,19 @@ class MyFrame(wx.Frame):
         if len(messages_user_in) == 0 and self.checkbox_remove_defaults.Value:
             messages_user_in.append("I identify as empty")
 
-        for num, message in enumerate(messages_user_in if self.checkbox_remove_defaults.Value else messages_user_in + message_as_text_list):
+        programming_messages = messages_user_in if self.checkbox_remove_defaults.Value else messages_user_in + message_as_text_list
+        random.shuffle(programming_messages)
+
+        for num, message in enumerate(programming_messages):
             if self.checkbox_Iphone_comp_Mode.Value:
-                if not(message.startswith('http') or message.startswith('spotify:track:')):
+                if not(message.startswith('http') or message.startswith('spotify:')):
                     message = "https://large-type.com/#" + message
 
             messages_lines.append(f"// \"{message}\"")
             messages_lines.append(f"const uint8_t dat{num}[] = "+ generate_nfc_c_table([ndef.UriRecord(message)], read_only=False))
         
         number_of_messages = int(len(messages_lines)/2)
-
+        
         messages_multilinetext = "\n".join(messages_lines)
         
         name_of_messagearray = ", ".join([f"dat{num}" for num in range(number_of_messages)])
@@ -362,6 +370,23 @@ class MyFrame(wx.Frame):
 
     def clean_src_folder_aux_files(self, event):  # wxGlade: MyFrame.<event_handler>
         self.execute_command('make clean', '/software/src', True)
+
+    def write_log_message(self, prog_success=False):
+        messages_user_in = []
+        for row in range(self.grid_data_in.GetNumberRows()):
+            if self.grid_data_in.GetCellValue(row, 0) != "":
+                messages_user_in.append(self.grid_data_in.GetCellValue(row, 0))
+
+        if not os.path.isdir("backup"):
+            os.makedirs("backup")
+        with open("backup/operations.csv", "a") as file_bk:
+            data_to_write = [
+                "Programming " + ("success" if prog_success else "fail"),
+                "Iphone comp mode: " + str(self.checkbox_Iphone_comp_Mode.Value),
+                "Defaut message exclude: " + str(self.checkbox_remove_defaults.Value),
+                messages_user_in
+            ]
+            file_bk.write(",".join(str(x) for x in data_to_write) + '\n')
 
 # end of class MyFrame
 
