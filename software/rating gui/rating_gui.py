@@ -26,7 +26,7 @@ rating_points_bool = ["Components straight",
                       "Nothing burned", 
                       "No solder peaks", 
                       "Melf Stripes aligned",
-                      "PCB has a name on it ",
+                      "PCB has a name on it",
                       "no cold solder joints",
                       "soldermask not damaged"
                       ]
