@@ -27,7 +27,8 @@ rating_points_bool = ["Components straight",
                       "No solder peaks", 
                       "Melf Stripes aligned",
                       "PCB has a name on it ",
-                      "no cold solder joints"
+                      "no cold solder joints",
+                      "soldermask not damaged"
                       ]
 
 needed_cols_dataset = ["Name",
@@ -79,6 +80,14 @@ if "ignore_done" not in st.session_state:
 # Upload section
 if "data" not in st.session_state:
     uploaded = st.file_uploader("Upload CSV", type="csv")
+
+    if st.button("Remove Backup Data"):
+        if os.path.exists("backup/operations.csv"):
+            os.remove("backup/operations.csv")
+            st.success("Removed backupfile")
+        else:
+            st.error("no backupfile found")
+
     if uploaded:
         data_frame = pd.read_csv(uploaded)
         data_frame = init_csv(data_frame)
