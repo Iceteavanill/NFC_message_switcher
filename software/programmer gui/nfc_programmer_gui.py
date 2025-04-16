@@ -211,6 +211,7 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.programmer_task_running = False
         self.wait_dialog = WaitNotification(self)
+        self.ShowFullScreen(not self.IsFullScreen(), wx.FULLSCREEN_ALL)
 
     def grid_changed(self, event):  # wxGlade: MyFrame.<event_handler>
         empty_rows = False
